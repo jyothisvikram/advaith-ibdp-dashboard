@@ -19,3 +19,18 @@
     cursor: pointer;
     pointer-events: auto;
 }
+/* Disabled Save Progress: no hover or click feedback */
+#saveProgress:disabled,
+#saveProgress:disabled:hover,
+#saveProgress:disabled:active,
+#saveProgress:disabled:focus {
+    background: #d1d5db !important;
+    color: #6b7280 !important;
+    border-color: #d1d5db !important;
+    opacity: 0.65 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    cursor: default !important;
+    pointer-events: none !important;
+    transition: none !important;
+}
