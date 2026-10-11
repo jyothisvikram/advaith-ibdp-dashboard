@@ -3,6 +3,7 @@ import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './config.js';
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 let DATA=[], progress={};
 let currentSession=null;
+let lastSavedActivityId=null;
 let offset=0,selected=DATA.find(x=>x.id==='49072862')?.id||DATA[0]?.id,subject='All',type='All',query='',monthShift=0;
 const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const date=s=>{if(!s)return null;const m=String(s).match(/^(\d{4})-(\d\d)-(\d\d)(?:[ T](\d\d):(\d\d))?/);return m?new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0)):null};
@@ -28,7 +29,7 @@ document.querySelectorAll('tr[data-id]').forEach(x=>x.onclick=()=>{selected=x.da
 function renderDetail(){const e=DATA.find(x=>x.id===selected);if(!e){$('detail').innerHTML='<h3>Activity details</h3>Select an activity.';return}const p=pval(e);$('detail').innerHTML=`<h3>Activity details</h3><div class="detail-title">${esc(e.title)}</div><div class="field"><b>Activity classification</b><select id="activityType">${types.map(t=>`<option value="${esc(t)}" ${e.type===t?'selected':''}>${esc(t)}</option>`).join('')}</select></div><div class="field"><b>Subject</b>${esc(e.subject)}</div><div class="field"><b>Scheduled start</b>${fmt(date(e.start))} ${time(date(e.start))}</div><div class="field"><b>Scheduled end</b>${fmt(date(e.end))} ${time(date(e.end))}</div><div class="field"><b>Verified submission deadline</b>${e.verified?fmt(date(e.due))+' '+time(date(e.due)):'Not verified'}</div><div class="field"><b>Personal progress</b><select id="progressStatus">${['Not Started','In Progress','Completed','Submitted'].map(s=>`<option ${status(e)===s?'selected':''}>${s}</option>`).join('')}</select></div><div class="field"><b>Notes</b><textarea id="progressNotes" placeholder="Add personal notes...">${esc(p.notes||'')}</textarea></div><button id="saveProgress">Save progress</button><div class="field"><b>Calendar description</b><div style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(e.description||'No description in the calendar feed.')}</div></div>${e.review?'<p class="warning">The activity classification is provisional.</p>':''}<p class="warning">ManageBac submission status is not available from the calendar feed. Progress here is manually maintained.</p>`;const saveButton=$('saveProgress');
   const fields={type:$('activityType'),status:$('progressStatus'),notes:$('progressNotes')};
   let saved={type:e.type,status:status(e),notes:p.notes||''};
-  let hasSaved=false, saving=false;
+  let hasSaved=lastSavedActivityId===e.id, saving=false;
   const values=()=>({type:fields.type.value,status:fields.status.value,notes:fields.notes.value});
   const refreshButton=()=>{
     const v=values();
@@ -47,14 +48,14 @@ function renderDetail(){const e=DATA.find(x=>x.id===selected);if(!e){$('detail')
     saving=false;
     if(ok){
       progress[e.id]={status:v.status,notes:v.notes};e.type=v.type;
-      saved={...v};hasSaved=true;
+      saved={...v};hasSaved=true;lastSavedActivityId=e.id;
       // Update summary, filters and activity rows while preserving the detail form.
       render();
       const button=$('saveProgress');
       if(button){button.textContent='Saved';button.disabled=true;}
     }else refreshButton();
   };
-}}
+}
 
 function renderCalendar(){const base=new Date(),m=new Date(base.getFullYear(),base.getMonth()+monthShift,1);$('monthTitle').textContent=fmt(m,{month:'long',year:'numeric'});const day=(m.getDay()+6)%7,days=new Date(m.getFullYear(),m.getMonth()+1,0).getDate();let html=['M','T','W','T','F','S','S'].map(x=>`<div class="weekday">${x}</div>`).join('');for(let i=0;i<day;i++)html+='<div></div>';for(let i=1;i<=days;i++){const d=new Date(m.getFullYear(),m.getMonth(),i),has=DATA.some(e=>{const ed=date(e.due)||date(e.start);return ed&&ed.toDateString()===d.toDateString()});html+=`<div class="${has?'has':''} ${d.toDateString()===new Date().toDateString()?'current':''}" title="${has?'Has calendar activities':''}">${i}</div>`}$('cal').innerHTML=html}
 $('prev').onclick=()=>{offset--;render()};$('next').onclick=()=>{offset++;render()};$('today').onclick=()=>{offset=0;render()};$('search').oninput=e=>{query=e.target.value.toLowerCase();render()};$('monthPrev').onclick=()=>{monthShift--;renderCalendar()};$('monthNext').onclick=()=>{monthShift++;renderCalendar()};
