@@ -6,10 +6,107 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1">
   <title>Advaith IBDP Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f5fa;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .panel {
+      background: white;
+      padding: 32px;
+      border-radius: 14px;
+      width: min(360px, 85vw);
+      box-shadow: 0 8px 28px #0001;
+    }
+    h1 { font-size: 24px; }
+    input, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 7px;
+    }
+    input { border: 1px solid #ccc; }
+    button {
+      background: #4056b5;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #message { overflow-wrap: anywhere; }
+  </style>
 </head>
 <body>
-  <h1>Advaith IBDP Tracker</h1>
-  <p>Dashboard setup successful!</p>
-  <p>Secure login will be added next.</p>
+  <div class="panel">
+    <h1>Advaith IBDP Tracker</h1>
+    <p>Sign in to access your coursework.</p>
+
+    <form id="loginForm">
+      <input id="email" type="email"
+             placeholder="Email address"
+             autocomplete="email" required>
+      <input id="password" type="password"
+             placeholder="Password"
+             autocomplete="current-password" required>
+      <button type="submit">Sign in</button>
+    </form>
+
+    <p id="message" role="status"></p>
+    <button id="signOut" hidden>Sign out</button>
+  </div>
+
+  <script type="module">
+    import { createClient } from
+      "https://esm.sh/@supabase/supabase-js@2";
+
+    const SUPABASE_URL =
+      "PASTE_YOUR_PROJECT_URL_HERE";
+
+    const SUPABASE_KEY =
+      "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+
+    const supabase = createClient(
+      SUPABASE_URL, SUPABASE_KEY
+    );
+
+    const message = document.getElementById("message");
+    const form = document.getElementById("loginForm");
+    const signOut = document.getElementById("signOut");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      message.textContent = "Signing in...";
+
+      const { error } =
+        await supabase.auth.signInWithPassword({
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value
+        });
+
+      if (error) {
+        message.textContent = error.message;
+      } else {
+        message.textContent = "Signed in successfully!";
+        form.hidden = true;
+        signOut.hidden = false;
+      }
+    });
+
+    signOut.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.reload();
+    });
+
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      message.textContent = "Signed in successfully!";
+      form.hidden = true;
+      signOut.hidden = false;
+    }
+  </script>
 </body>
 </html>
