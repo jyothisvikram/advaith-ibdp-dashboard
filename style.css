@@ -2,3 +2,20 @@
 [hidden]{display:none!important}
 .login-panel{max-width:420px;margin:9vh auto;padding:30px;background:white;border:1px solid #e4eaf2;border-radius:12px}
 .login-panel input{display:block;width:100%;padding:12px;margin:12px 0;border:1px solid #dce3ed;border-radius:8px}
+/* Save Progress button */
+
+#saveProgress:disabled {
+    background-color: #d1d5db;
+    color: #6b7280;
+    opacity: 0.65;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+#saveProgress:not(:disabled) {
+    background-color: #2563eb;
+    color: white;
+    opacity: 1;
+    cursor: pointer;
+    pointer-events: auto;
+}
